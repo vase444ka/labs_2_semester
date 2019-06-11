@@ -14,7 +14,7 @@ const
   cell_size = 20;
   H = 20;
   W = 20;
-  speed:=300;
+  speed=300;
   
 function min(a, b: integer):integer;
 begin
@@ -99,36 +99,32 @@ begin
     end;
 end;
 
+procedure drawWall(x, y: integer);
+begin
+  setbrushcolor(clBlack);
+  rectangle((x-1)*cell_size, (y - 1)*cell_size, x*cell_size, y*cell_size);
+end;
+
 procedure draw();
 var
   y, x, i, lineX, lineY: integer;
 begin
   clearWindow;
-  lineX := cell_size;
-  lineY := cell_size;
-  setPenColor(clBlack);
-  for i := 1 to W - 1 do
-  begin
-    line(lineX, 0, lineX, window.height);
-    lineX := lineX + cell_size;
-  end;
-  
-  for i := 1 to H - 1 do
-  begin
-    line(0, lineY, window.width, lineY);
-    lineY := lineY + cell_size;
-  end;
-  
   
   for y := 1 to H do
     for x := 1 to W do
       if (field[x, y] = wall) then
-        floodFill(x * cell_size - cell_size div 2, y * cell_size - cell_size div 2, ClBlack)
-      else
-        floodFill(x * cell_size - cell_size div 2, y * cell_size - cell_size div 2, ClWhite);
+        drawWall(x, y);
    
   for i:=1 to snakeSize do
-    rectangle(
+  begin
+    setbrushcolor(rgb(0,0, 255 div snakeSize * i));
+    fillrectangle(cell_size*(snake[i].X - 1), cell_size*(snake[i].y - 1), cell_size*snake[i].X, cell_size*snake[i].Y);
+  end;
+  
+  //DrawFood(food.X, food.Y);
+  
+  redraw;
   
 end;
 
@@ -138,6 +134,7 @@ begin
   fillRectangle(0, H*cell_size div 3, W*cell_size, H*cell_size div 3 *2);
   setFontSize(H*cell_size div 18);
   drawTextCentered(W*cell_size div 2, H*cell_size div 2, 'ENTER LEVEL: 1-10');
+  redraw;
   read(level);
 end;
 
@@ -147,6 +144,7 @@ begin
   fillRectangle(0, H*cell_size div 3, W*cell_size, H*cell_size div 3 *2);
   setFontSize(H*cell_size div 18);
   drawTextCentered(W*cell_size div 2, H*cell_size div 2, 'ZRADA');
+  redraw;
 end;
 
 function is_alive(): boolean;
@@ -169,7 +167,8 @@ end;
 
 procedure turn(vk: integer);
 begin
-  dir:=vk;
+  if (vk>=37) and (vk<=40) then
+    dir:=vk;
 end;
 
 procedure move();
@@ -181,23 +180,24 @@ end;
 
 var i, j, level: integer;
 begin
+  lockDrawing;
   setWindowSize(W*cell_size, H*cell_size);
-  
-  get_level(level);
-  
+  dir := 0;
+  snakeSize:=1; snake[1].X := 1; snake[1].Y:=1;//snake head + first food;   
   for i:=1 to W do
     for j:=1 to H do
       field[i, j] := 0;
-  snakeSize:=1;
       
+  get_level(level);      
   generate_field(W, H, level);
-  draw();
-  onkeydown:=turn();
-  while (is_alive()) do
+  
+  onkeydown:=turn;
+  
+  while (true) do
   begin
-    move();
     draw();
     sleep(speed);
+    move();
   end;
   LoseScreen();
   
