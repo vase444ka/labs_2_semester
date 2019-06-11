@@ -14,7 +14,7 @@ const
   cell_size = 20;
   H = 20;
   W = 20;
-  speed = 300;
+  speed = 200;
 
 function min(a, b: integer): integer;
 begin
@@ -38,7 +38,7 @@ var
   
   procedure cutpoints_dfs(x, y, par_x, par_y: integer);
   var
-    children, i, next_x, next_y: integer;
+    children, next_x, next_y: integer;
   begin
     children := 0;
     used[x, y] := 1;
@@ -46,7 +46,7 @@ var
     tout[x, y] := timer;
     inc(timer);
     
-    for i := 1 to 4 do
+    for var i :integer:= 1 to 4 do
     begin
       next_x := x + d[i].X;
       next_y := y + d[i].Y;
@@ -68,14 +68,14 @@ var
   end;
 
 var
-  i, j, ii, jj, start_x, start_y: integer;
+  start_x, start_y: integer;
 begin
   d[1] := (-1, 0);
   d[2] := (1, 0);
   d[3] := (0, -1);
   d[4] := (0, 1);
-  for i := 1 to H do
-    for j := 1 to W do
+  for var i : integer := 1 to H do
+    for var j: integer := 1 to W do
     begin
       field[i][j] := wall;
       
@@ -88,8 +88,8 @@ begin
         start_x := (start_x - 1) mod W + 1;      
       end;
       
-      for ii := 1 to H do
-        for jj := 1 to W do
+      for var ii : integer := 1 to H do
+        for var jj : integer := 1 to W do
           used[ii, jj] := 0;
       timer := 0;
       cutpoints := false;
@@ -104,27 +104,34 @@ end;
 procedure drawWall(x, y: integer);
 begin
   setbrushcolor(clBlack);
-  rectangle((x - 1) * cell_size, (y - 1) * cell_size, x * cell_size, y * cell_size);
+  fillrectangle((x - 1) * cell_size, (y - 1) * cell_size, x * cell_size, y * cell_size);
+end;
+
+procedure drawFood(x, y: integer);
+begin
+  setbrushcolor(clGreen);
+  fillrectangle((x - 1) * cell_size, (y - 1) * cell_size, x * cell_size, y * cell_size);
+end;
+
+procedure drawSnake(i: integer);
+begin
+  setbrushcolor(rgb(0, 0, 255 div snakeSize * i));
+  fillrectangle(cell_size * (snake[i].X - 1), cell_size * (snake[i].y - 1), cell_size * snake[i].X, cell_size * snake[i].Y);
 end;
 
 procedure drawAll();
-var
-  y, x, i, lineX, lineY: integer;
 begin
   clearWindow;
   
-  for y := 1 to H do
-    for x := 1 to W do
+  for var y: integer := 1 to H do
+    for var x: integer := 1 to W do
       if (field[x, y] = wall) then
         drawWall(x, y);
   
-  for i := 1 to snakeSize do
-  begin
-    setbrushcolor(rgb(0, 0, 255 div snakeSize * i));
-    fillrectangle(cell_size * (snake[i].X - 1), cell_size * (snake[i].y - 1), cell_size * snake[i].X, cell_size * snake[i].Y);
-  end;
+  for var i: integer := 1 to snakeSize do
+    drawSnake(i);
   
-  //DrawFood(food.X, food.Y);
+  DrawFood(food.X, food.Y);
   
   redraw;
   
@@ -152,8 +159,6 @@ end;
 function is_alive(): boolean;
 var
   head: point;
-var
-  i: integer;
 begin
   head := snake[1];
   is_alive := true;
@@ -163,7 +168,7 @@ begin
   if not (can_fit(head.X, head.Y)) then
     is_alive := false;
   
-  for i := 2 to snakeSize do
+  for var i: integer := 2 to snakeSize do
     if (head = snake[i]) then
       is_alive := false;    
   
@@ -175,11 +180,16 @@ begin
     dir := vk;
 end;
 
+procedure newFood();
+begin
+  food.X:=random(1, W);
+  food.Y:=random(1, H);
+  //todo
+end;
+
 procedure move();
 var
   head: point;
-var
-  i: integer;
 begin
   head := snake[1];
   if (dir = vk_up) then
@@ -193,10 +203,16 @@ begin
   
   if (dir = vk_right) then
     head.X := head.X + 1;
+    
+  if(head = food) then
+  begin
+    inc(snakeSize);
+    newFood();
+  end;
   
   if (dir <>0) then
   begin
-    for i := snakesize downto 2 do
+    for var i: integer := snakesize downto 2 do
       snake[i] := snake[i - 1];
   
     snake[1] := head;
@@ -207,26 +223,35 @@ end;
 
 
 var
-  i, j, level: integer;
+  level: integer;
 
 begin
   lockDrawing;
   setWindowSize(W * cell_size, H * cell_size);
   dir := 0;
-  snakeSize := 1; snake[1].X := 1; snake[1].Y := 1;//snake head + first food;   
-  for i := 1 to W do
-    for j := 1 to H do
-      field[i, j] := 0;
+  snakeSize := 1; 
+  for var i: integer := 1 to W do
+    for var j: integer := 1 to H do
+      field[i, j] := 0; 
   
   get_level(level);      
   generate_field(W, H, level);
+  snake[1].X := 1; 
+  snake[1].Y := 1;
+  while (field[snake[1].X, snake[1].Y] = wall) do
+  begin
+     snake[1].X:=snake[1].X + 1;
+     snake[1].Y := snake[1].Y + (snake[1].X - 1) div W;
+     snake[1].X := (snake[1].X- 1) mod W + 1;      
+  end;
+  
   
   onkeydown := turn;
   
   while (is_alive()) do
   begin
     drawAll();
-    sleep(speed);
+    sleep(speed*level div 2);
     move();
   end;
   
