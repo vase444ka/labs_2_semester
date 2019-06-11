@@ -2,7 +2,7 @@
 
 
 var
-  dir, snakeSize, W, H, level: integer;
+  dir, snakeSize: integer;
   field: array [1..100, 1..100] of integer;
   snake: array [1..1000] of Point;
   food: Point;
@@ -12,6 +12,9 @@ const
   ground = 0;
   level_max = 10;
   cell_size = 20;
+  H = 20;
+  W = 20;
+  speed:=300;
   
 function min(a, b: integer):integer;
 begin
@@ -23,10 +26,10 @@ end;
 
 function can_fit(x, y: integer): boolean;
 begin
-  can_fit:= (x > 0) and (y > 0) and (x <= W) and (y <= H);
+  can_fit:= (x >= 1) and (y >= 1) and (x <= W) and (y <= H);
 end;
 
-procedure generate_field(W, H: integer);
+procedure generate_field(W, H, level: integer);
 var
   tin, tout, used: array[1..100, 1..100] of integer;
   d:array[1..4] of point;
@@ -90,25 +93,112 @@ begin
       cutpoints := false;
       cutpoints_dfs(start_x, start_y, -1, -1);
           
-      if (cutpoints = true) or (random(2, level_max + 1) > {level}8) then
+      if (cutpoints = true) or (random(2, level_max + 1) > level) then
         field[i, j] := ground;
-      
       
     end;
 end;
 
-
-var i, j: integer;
+procedure draw();
+var
+  y, x, i, lineX, lineY: integer;
 begin
-  W:=20;
-  H:=20;
+  clearWindow;
+  lineX := cell_size;
+  lineY := cell_size;
+  setPenColor(clBlack);
+  for i := 1 to W - 1 do
+  begin
+    line(lineX, 0, lineX, window.height);
+    lineX := lineX + cell_size;
+  end;
+  
+  for i := 1 to H - 1 do
+  begin
+    line(0, lineY, window.width, lineY);
+    lineY := lineY + cell_size;
+  end;
+  
+  
+  for y := 1 to H do
+    for x := 1 to W do
+      if (field[x, y] = wall) then
+        floodFill(x * cell_size - cell_size div 2, y * cell_size - cell_size div 2, ClBlack)
+      else
+        floodFill(x * cell_size - cell_size div 2, y * cell_size - cell_size div 2, ClWhite);
+   
+  for i:=1 to snakeSize do
+    rectangle(
+  
+end;
+
+procedure get_level(var level: integer);
+begin
+  setbrushColor(rgb(125, 150, 160));
+  fillRectangle(0, H*cell_size div 3, W*cell_size, H*cell_size div 3 *2);
+  setFontSize(H*cell_size div 18);
+  drawTextCentered(W*cell_size div 2, H*cell_size div 2, 'ENTER LEVEL: 1-10');
+  read(level);
+end;
+
+procedure LoseScreen();
+begin
+  setbrushColor(clRed);
+  fillRectangle(0, H*cell_size div 3, W*cell_size, H*cell_size div 3 *2);
+  setFontSize(H*cell_size div 18);
+  drawTextCentered(W*cell_size div 2, H*cell_size div 2, 'ZRADA');
+end;
+
+function is_alive(): boolean;
+var head:point;
+var i: integer;
+begin
+  head:=snake[1];
+  is_alive:=true;
+  if (field[head.x, head.y] = wall) then
+    is_alive:=false;
+  
+  if not(can_fit(head.X, head.Y)) then
+    is_alive:=false;
+    
+  for i:=2 to snakeSize do
+    if (head = snake[i]) then
+      is_alive:=false;    
+
+end;
+
+procedure turn(vk: integer);
+begin
+  dir:=vk;
+end;
+
+procedure move();
+begin
+
+end;
+
+
+
+var i, j, level: integer;
+begin
   setWindowSize(W*cell_size, H*cell_size);
+  
+  get_level(level);
   
   for i:=1 to W do
     for j:=1 to H do
       field[i, j] := 0;
+  snakeSize:=1;
       
-  generate_field(W, H);
-  
+  generate_field(W, H, level);
+  draw();
+  onkeydown:=turn();
+  while (is_alive()) do
+  begin
+    move();
+    draw();
+    sleep(speed);
+  end;
+  LoseScreen();
   
 end.
