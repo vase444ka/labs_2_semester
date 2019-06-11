@@ -103,19 +103,19 @@ end;
 
 procedure drawWall(x, y: integer);
 begin
-  setbrushcolor(clBlack);
+  setbrushcolor(clBlack);//todo
   fillrectangle((x - 1) * cell_size, (y - 1) * cell_size, x * cell_size, y * cell_size);
 end;
 
 procedure drawFood(x, y: integer);
 begin
-  setbrushcolor(clGreen);
+  setbrushcolor(clGreen);//todo
   fillrectangle((x - 1) * cell_size, (y - 1) * cell_size, x * cell_size, y * cell_size);
 end;
 
 procedure drawSnake(i: integer);
 begin
-  setbrushcolor(rgb(0, 0, 255 div snakeSize * i));
+  setbrushcolor(rgb(0, 0, 255 div snakeSize * i));//todo
   fillrectangle(cell_size * (snake[i].X - 1), cell_size * (snake[i].y - 1), cell_size * snake[i].X, cell_size * snake[i].Y);
 end;
 
@@ -162,12 +162,12 @@ var
 begin
   head := snake[1];
   is_alive := true;
-  if (field[head.x, head.y] = wall) then
-    is_alive := false;
-  
   if not (can_fit(head.X, head.Y)) then
-    is_alive := false;
-  
+    is_alive := false
+  else
+  if (field[head.x, head.y] = wall) then
+    is_alive := false
+  else
   for var i: integer := 2 to snakeSize do
     if (head = snake[i]) then
       is_alive := false;    
@@ -184,6 +184,11 @@ procedure newFood();
 begin
   food.X:=random(1, W);
   food.Y:=random(1, H);
+  while (field[food.X, food.Y] = wall) do
+  begin
+    food.X:=random(1, W);
+    food.Y:=random(1, H);
+  end;
   //todo
 end;
 
@@ -226,7 +231,7 @@ var
   level: integer;
 
 begin
-  lockDrawing;
+  lockDrawing;//todo code cleanup
   setWindowSize(W * cell_size, H * cell_size);
   dir := 0;
   snakeSize := 1; 
@@ -247,11 +252,12 @@ begin
   
   
   onkeydown := turn;
+  newFood();
   
   while (is_alive()) do
   begin
     drawAll();
-    sleep(speed*level div 2);
+    sleep(speed*level - 10*level*level);
     move();
   end;
   
